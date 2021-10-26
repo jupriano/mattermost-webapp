@@ -15,6 +15,8 @@ import {browserHistory} from 'utils/browser_history';
 import Constants, {RHSStates} from 'utils/constants';
 import {t} from 'utils/i18n';
 import {isMobile} from 'utils/utils';
+import CRTThreadsPaneTutorialTip
+    from '../collapsed_reply_threads_tour/crt_threads_pane_tutorial_tip/crt_threads_pane_tutorial_tip';
 
 interface RhsHeaderPostProps {
     isExpanded: boolean;
@@ -25,6 +27,7 @@ interface RhsHeaderPostProps {
     isCollapsedThreadsEnabled: boolean;
     isFollowingThread?: boolean;
     currentTeamId: string;
+    showThreadsTutorialTip: boolean;
     currentUserId: string;
     setRhsExpanded: (b: boolean) => void;
     showMentions: () => void;
@@ -228,6 +231,7 @@ export default class RhsHeaderPost extends React.PureComponent<RhsHeaderPostProp
                         </button>
                     </OverlayTrigger>
                 </div>
+                {this.props.showThreadsTutorialTip && <CRTThreadsPaneTutorialTip/>}
             </div>
         );
     }

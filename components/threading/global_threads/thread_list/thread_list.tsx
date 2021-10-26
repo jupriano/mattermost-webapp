@@ -13,7 +13,7 @@ import {getThreads, markAllThreadsInTeamRead} from 'mattermost-redux/actions/thr
 import {$ID} from 'mattermost-redux/types/utilities';
 import {UserThread} from 'mattermost-redux/types/threads';
 
-import {Constants} from 'utils/constants';
+import {Constants, CrtTutorialSteps, Preferences} from 'utils/constants';
 
 import NoResultsIndicator from 'components/no_results_indicator';
 import SimpleTooltip from 'components/widgets/simple_tooltip';
@@ -23,10 +23,15 @@ import Button from '../../common/button';
 import BalloonIllustration from '../../common/balloon_illustration';
 
 import {useThreadRouting} from '../../hooks';
+import './thread_list.scss';
+import CRTListTutorialTip from 'components/collapsed_reply_threads_tour/crt_list_tutorial_tip/crt_list_tutorial_tip';
+import {GlobalState} from 'types/store';
+import {getInt} from 'mattermost-redux/selectors/entities/preferences';
+import {getCurrentUser} from 'mattermost-redux/selectors/entities/common';
+import CRTUnreadTutorialTip
+    from 'components/collapsed_reply_threads_tour/crt_unread_tutorial_tip/crt_unread_tutorial_tip';
 
 import VirtualizedThreadList from './virtualized_thread_list';
-
-import './thread_list.scss';
 
 export enum ThreadFilter {
     none = '',
@@ -55,6 +60,10 @@ const ThreadList = ({
     const unread = ThreadFilter.unread === currentFilter;
     const data = unread ? unreadIds : ids;
     const ref = React.useRef<HTMLDivElement>(null);
+    const currentUser = useSelector((state: GlobalState) => getCurrentUser(state));
+    const tipStep = useSelector((state: GlobalState) => getInt(state, Preferences.CRT_TUTORIAL_STEP, currentUser.id));
+    const showListTutorialTip = tipStep === CrtTutorialSteps.LIST_POPOVER;
+    const showUnreadTutorialTip = tipStep === CrtTutorialSteps.UNREAD_POPOVER;
 
     const {formatMessage} = useIntl();
     const dispatch = useDispatch();
@@ -133,31 +142,40 @@ const ThreadList = ({
             tabIndex={0}
             ref={ref}
             className={'ThreadList'}
+            id={'threads-list-container'}
         >
             <Header
                 heading={(
                     <>
-                        <Button
-                            className={'Button___large Margined'}
-                            isActive={currentFilter === ThreadFilter.none}
-                            onClick={handleRead}
+                        <div className={'tab-button-wrapper'}>
+                            <Button
+                                className={'Button___large Margined'}
+                                isActive={currentFilter === ThreadFilter.none}
+                                onClick={handleRead}
+                            >
+                                <FormattedMessage
+                                    id='threading.filters.allThreads'
+                                    defaultMessage='All your threads'
+                                />
+                            </Button>
+                        </div>
+                        <div
+                            id={'threads-list-unread-button'}
+                            className={'tab-button-wrapper'}
                         >
-                            <FormattedMessage
-                                id='threading.filters.allThreads'
-                                defaultMessage='All your threads'
-                            />
-                        </Button>
-                        <Button
-                            className={'Button___large Margined'}
-                            isActive={currentFilter === ThreadFilter.unread}
-                            hasDot={someUnread}
-                            onClick={handleUnread}
-                        >
-                            <FormattedMessage
-                                id='threading.filters.unreads'
-                                defaultMessage='Unreads'
-                            />
-                        </Button>
+                            <Button
+                                className={'Button___large Margined'}
+                                isActive={currentFilter === ThreadFilter.unread}
+                                hasDot={someUnread}
+                                onClick={handleUnread}
+                            >
+                                <FormattedMessage
+                                    id='threading.filters.unreads'
+                                    defaultMessage='Unreads'
+                                />
+                            </Button>
+                            {showUnreadTutorialTip && <CRTUnreadTutorialTip/>}
+                        </div>
                     </>
                 )}
                 right={(
@@ -189,6 +207,7 @@ const ThreadList = ({
                     selectedThreadId={selectedThreadId}
                     total={unread ? totalUnread : total}
                 />
+                {showListTutorialTip && <CRTListTutorialTip/>}
                 {unread && !someUnread && isEmpty(unreadIds) ? (
                     <NoResultsIndicator
                         expanded={true}
@@ -203,5 +222,4 @@ const ThreadList = ({
         </div>
     );
 };
-
 export default memo(ThreadList);
